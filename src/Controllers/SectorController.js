@@ -1,9 +1,16 @@
 const moment = require('moment-timezone');
 const Sector = require('../Models/SectorSchema');
 const { validate } = require('../Utils/validate');
+const { demandGet } = require('../../../2021-2-SiGeD-Demands/src/Controllers/DemandController');
 
 const sectorGet = async (req, res) => {
   const sectors = await Sector.find();
+
+  return res.status(200).json(sectors);
+};
+
+const sectorGetAtivos = async (req, res) => {
+  const sectors = await Sector.find({ open: true });
 
   return res.status(200).json(sectors);
 };
@@ -62,15 +69,49 @@ const sectorUpdate = async (req, res) => {
   }
 };
 
-const sectorDelete = async (req, res) => {
+const toggleSector = async (req, res) => {
   const { id } = req.params;
 
   try {
-    await Sector.deleteOne({ _id: id });
 
-    return res.json({ message: 'success' });
-  } catch (error) {
-    return res.status(400).json({ message: 'failure' });
+    const token = req.headers['x-access-token'];
+
+    console.log("teste");
+
+    const sectorFound = await Sector.findOne({ _id: id })
+
+    const demand = await demandGet(token);
+
+    if (demand.error) {
+      return res.status(400).json({ err: demand.error });
+    }
+
+    for(var i=0; i<demand.length; i++){
+      if(demand[i].sectorId === id && demand[i].open === true){
+        startModal();
+        return;
+      }
+    }
+
+    let { open } = sectorFound;
+
+    open = !sectorFound.open;
+
+    const updateStatus = await Sector.findOneAndUpdate(
+      { _id: id },
+      {
+        open,
+        updatedAt: moment
+          .utc(moment.tz('America/Sao_Paulo').format('YYYY-MM-DDTHH:mm:ss'))
+          .toDate(),
+      },
+      { new: true },
+      (sector) => sector,
+    );
+
+    return res.json(updateStatus)
+  } catch {
+    return res.status(400).json({ err: 'Invalid ID' });
   }
 };
 
@@ -81,5 +122,5 @@ const newestFourSectorsGet = async (req, res) => {
 };
 
 module.exports = {
-  sectorGet, sectorId, sectorCreate, sectorUpdate, sectorDelete, newestFourSectorsGet,
+  sectorGet, sectorId, sectorCreate, sectorUpdate, toggleSector, newestFourSectorsGet, sectorGetAtivos,
 };
