@@ -38,6 +38,20 @@ docker-compose up
 ```
 A API estará rodando na [porta 3004](http://localhost:3004).
 
+## Seeders
+
+Para popular a base de dados (após subir o docker-compose) com dados exemplos use os seguintes comandos:
+
+```bash
+docker exec -it backend_sector bash -c "node src/seeders/seedSector.js"
+```
+
+Para resetar o banco use o comando:
+
+```bash
+docker-compose rm
+```
+
 ## Rotas
 
 **GET: `/sector/`**
