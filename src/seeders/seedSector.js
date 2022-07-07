@@ -31,19 +31,18 @@ db.once("open", () => {
 
 const sectorsLength = sectors.length;
 
-sectors.forEach(async (user, index) => {
-  await user.save((err, result) => {
-    try {
-      if (err) throw new Error(`${err?.message}`);
-      if (index === sectorsLength - 1) {
-        console.log("DONE!");
-        db.close();
-      }
-    } catch(err) {
-      console.log(`Failed to seed sectors ${err}`);
+sectors.forEach(async (sector, index) => {
+  try {
+    const result = await sector.save();
+    if (index === sectorsLength - 1) {
+      console.log("Sectors seeds done!");
       db.close();
-      process.exit(0);
     }
-  });
+  } catch (error) {
+    const err = new Error(`${error?.message}`);
+    console.log(`Sector seed failed - ${err}`);
+    db.close();
+    process.exit(0);
+  }
 });
 
